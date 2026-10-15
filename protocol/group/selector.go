@@ -197,5 +197,4 @@ func RealTag(outboundManager adapter.OutboundManager, detour adapter.Outbound) s
 			return tag
 		}
 	}
-	return detour.Tag()
 }
