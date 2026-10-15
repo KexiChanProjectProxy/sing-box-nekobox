@@ -113,6 +113,7 @@ type InboundContext struct {
 	SourcePortMatch              bool
 	DestinationAddressMatch      bool
 	DestinationPortMatch         bool
+	MatchedRuleSetTag            string
 	DeferredIPCIDRMatchGroups    uint8
 	IgnoreDestinationIPCIDRMatch bool
 }
@@ -128,6 +129,7 @@ func (c *InboundContext) ResetRuleMatchCache() {
 	c.SourcePortMatch = false
 	c.DestinationAddressMatch = false
 	c.DestinationPortMatch = false
+	c.MatchedRuleSetTag = ""
 	c.DeferredIPCIDRMatchGroups = 0
 }
 

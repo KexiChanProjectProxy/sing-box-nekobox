@@ -55,6 +55,7 @@ func (r *RuleSetItem) Match(metadata *adapter.InboundContext) bool {
 	for _, ruleSet := range r.setList {
 		nestedMetadata := r.nestedMetadata(metadata)
 		if ruleSet.Match(&nestedMetadata) {
+			recordMatchedRuleSet(metadata, ruleSet.Name())
 			return true
 		}
 	}
@@ -66,6 +67,7 @@ func (r *RuleSetItem) matchWithOuterGroups(metadata *adapter.InboundContext, out
 	var (
 		matched        bool
 		deferredGroups uint8
+		matchedTag     string
 	)
 	for _, ruleSet := range r.setList {
 		nestedMetadata := r.nestedMetadata(metadata)
@@ -79,10 +81,14 @@ func (r *RuleSetItem) matchWithOuterGroups(metadata *adapter.InboundContext, out
 						branchDeferredGroups := nestedMetadata.DeferredIPCIDRMatchGroups &^ uint8(merged.satisfied)
 						if branchDeferredGroups == 0 {
 							metadata.DeferredIPCIDRMatchGroups &^= uint8(merged.satisfied)
+							recordMatchedRuleSet(metadata, ruleSet.Name())
 							return true
 						}
 						matched = true
 						deferredGroups |= branchDeferredGroups
+						if matchedTag == "" {
+							matchedTag = ruleSet.Name()
+						}
 					}
 				}
 				continue
@@ -90,16 +96,29 @@ func (r *RuleSetItem) matchWithOuterGroups(metadata *adapter.InboundContext, out
 		}
 		if outerDone && ruleSet.Match(&nestedMetadata) {
 			if nestedMetadata.DeferredIPCIDRMatchGroups == 0 {
+				recordMatchedRuleSet(metadata, ruleSet.Name())
 				return true
 			}
 			matched = true
 			deferredGroups |= nestedMetadata.DeferredIPCIDRMatchGroups
+			if matchedTag == "" {
+				matchedTag = ruleSet.Name()
+			}
 		}
 	}
 	if matched {
 		metadata.DeferredIPCIDRMatchGroups |= deferredGroups
+		recordMatchedRuleSet(metadata, matchedTag)
 	}
 	return matched
+}
+
+// recordMatchedRuleSet keeps the first matched rule-set tag for the
+// matched_ruleset hash keys of loadbalance.
+func recordMatchedRuleSet(metadata *adapter.InboundContext, tag string) {
+	if metadata.MatchedRuleSetTag == "" {
+		metadata.MatchedRuleSetTag = tag
+	}
 }
 
 func (r *RuleSetItem) nestedMetadata(metadata *adapter.InboundContext) adapter.InboundContext {

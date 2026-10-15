@@ -205,6 +205,7 @@ func (r *abstractLogicalRule) Match(metadata *adapter.InboundContext) bool {
 	var (
 		matched        bool
 		deferredGroups uint8
+		nestedTag      string
 	)
 	if r.mode == C.LogicalTypeAnd {
 		matched = true
@@ -216,6 +217,9 @@ func (r *abstractLogicalRule) Match(metadata *adapter.InboundContext) bool {
 				deferredGroups = 0
 				break
 			}
+			if nestedTag == "" {
+				nestedTag = nestedMetadata.MatchedRuleSetTag
+			}
 			deferredGroups |= nestedMetadata.DeferredIPCIDRMatchGroups
 		}
 	} else {
@@ -224,6 +228,9 @@ func (r *abstractLogicalRule) Match(metadata *adapter.InboundContext) bool {
 			nestedMetadata.ResetRuleCache()
 			if rule.Match(&nestedMetadata) {
 				matched = true
+				if nestedTag == "" {
+					nestedTag = nestedMetadata.MatchedRuleSetTag
+				}
 				if nestedMetadata.DeferredIPCIDRMatchGroups == 0 {
 					deferredGroups = 0
 					break
@@ -234,6 +241,11 @@ func (r *abstractLogicalRule) Match(metadata *adapter.InboundContext) bool {
 	}
 	if matched {
 		metadata.DeferredIPCIDRMatchGroups |= deferredGroups
+		// The first rule-set tag matched by a nested rule is kept for the
+		// matched_ruleset hash keys of loadbalance.
+		if metadata.MatchedRuleSetTag == "" {
+			metadata.MatchedRuleSetTag = nestedTag
+		}
 	}
 	if r.invert {
 		if !matched {
