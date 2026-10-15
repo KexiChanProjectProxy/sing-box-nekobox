@@ -8525,6 +8525,58 @@
         "wifi"
       ]
     },
+    "LoadBalanceHashOptions": {
+      "type": "object",
+      "properties": {
+        "key_parts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "virtual_nodes": {
+          "type": "integer"
+        },
+        "on_empty_key": {
+          "type": "string"
+        },
+        "key_salt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LoadBalanceTopNOptions": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "integer"
+        },
+        "backup": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LoadBalanceWeightedDelayOptions": {
+      "type": "object",
+      "properties": {
+        "window": {
+          "type": "integer"
+        },
+        "window_weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "last_weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        }
+      },
+      "additionalProperties": false
+    },
     "LogOptions": {
       "type": "object",
       "properties": {
@@ -10852,8 +10904,32 @@
             "min_idle_session": {
               "type": "integer"
             },
+            "ensure_idle_session": {
+              "type": "integer"
+            },
+            "min_idle_session_for_age": {
+              "type": "integer"
+            },
+            "ensure_idle_session_create_rate": {
+              "type": "integer"
+            },
+            "heartbeat": {
+              "$ref": "#/$defs/Duration"
+            },
+            "max_connection_lifetime": {
+              "$ref": "#/$defs/Duration"
+            },
+            "connection_lifetime_jitter": {
+              "$ref": "#/$defs/Duration"
+            },
             "client_metadata": {
               "type": "string"
+            },
+            "close_after_idle": {
+              "$ref": "#/$defs/Duration"
+            },
+            "close_after_lifetime": {
+              "$ref": "#/$defs/Duration"
             }
           },
           "required": [
@@ -11663,6 +11739,79 @@
             },
             "realm": {
               "$ref": "#/$defs/Hysteria2Realm"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "loadbalance"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "primary_outbounds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "x-tag-reference": "outbound"
+              }
+            },
+            "backup_outbounds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "x-tag-reference": "outbound"
+              }
+            },
+            "url": {
+              "type": "string"
+            },
+            "interval": {
+              "$ref": "#/$defs/Duration"
+            },
+            "timeout": {
+              "$ref": "#/$defs/Duration"
+            },
+            "idle_timeout": {
+              "$ref": "#/$defs/Duration"
+            },
+            "tolerance": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "sorter": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "weighted_delay": {
+              "$ref": "#/$defs/LoadBalanceWeightedDelayOptions"
+            },
+            "top_n": {
+              "$ref": "#/$defs/LoadBalanceTopNOptions"
+            },
+            "strategy": {
+              "type": "string"
+            },
+            "hash": {
+              "$ref": "#/$defs/LoadBalanceHashOptions"
+            },
+            "empty_pool_action": {
+              "type": "string"
+            },
+            "interrupt_exist_connections": {
+              "type": "boolean"
+            },
+            "latency_mode": {
+              "type": "string"
             }
           },
           "required": [
@@ -13498,6 +13647,9 @@
             },
             "interrupt_exist_connections": {
               "type": "boolean"
+            },
+            "latency_mode": {
+              "type": "string"
             }
           },
           "required": [
